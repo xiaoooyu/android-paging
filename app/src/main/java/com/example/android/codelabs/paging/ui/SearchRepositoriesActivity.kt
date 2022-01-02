@@ -43,8 +43,12 @@ class SearchRepositoriesActivity : AppCompatActivity() {
         setContentView(view)
 
         // get the view model
-        val viewModel = ViewModelProvider(this, Injection.provideViewModelFactory(owner = this))
-            .get(SearchRepositoriesViewModel::class.java)
+        val viewModel = ViewModelProvider(
+            this, Injection.provideViewModelFactory(
+                context = this,
+                owner = this
+            )
+        ).get(SearchRepositoriesViewModel::class.java)
 
         // add dividers between RecyclerView's row items
         val decoration = DividerItemDecoration(this, DividerItemDecoration.VERTICAL)
@@ -137,10 +141,12 @@ class SearchRepositoriesActivity : AppCompatActivity() {
         })
 
         val notLoading = repoAdapter.loadStateFlow
+            .asRemotePresentationState()
+            .map { it == RemotePresentationState.PRESENTED }
             // Only emit when REFRESH LoadState for the paging source changes
-            .distinctUntilChangedBy { it.source.refresh }
-            // Only react to cases where REFRESH completes i.e., NotLoading
-            .map { it.source.refresh is LoadState.NotLoading }
+//            .distinctUntilChangedBy { it.source.refresh }
+//            // Only react to cases where REFRESH completes i.e., NotLoading
+//            .map { it.source.refresh is LoadState.NotLoading }
 
         val hasNotScrolledForCurrentSearch = uiState
             .map { it.hasNotScrolledForCurrentSearch }
@@ -168,12 +174,12 @@ class SearchRepositoriesActivity : AppCompatActivity() {
                 // show empty list
                 emptyList.isVisible = isListEmpty
                 // Only show the list if refresh succeeds.
-                list.isVisible = !isListEmpty
+                list.isVisible = loadState.mediator?.refresh is LoadState.NotLoading
 
                 // Show loading spinner during initial load or refresh
-                progressBar.isVisible = loadState.source.refresh is LoadState.Loading
+                progressBar.isVisible = loadState.mediator?.refresh is LoadState.Loading
                 // Show the retry state if initial load or refresh fails
-                retryButton.isVisible = loadState.source.refresh is LoadState.Error
+                retryButton.isVisible = loadState.mediator?.refresh is LoadState.Error
 
                 val errorState = loadState.refresh as? LoadState.Error
                     ?: loadState.source.append as? LoadState.Error

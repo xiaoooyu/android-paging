@@ -25,7 +25,8 @@ import retrofit2.http.GET
 import retrofit2.http.Query
 
 const val IN_QUALIFIER = "in:name,description"
-
+// GitHub page API is 1 based: https://developer.github.com/v3/#pagination
+const val GITHUB_STARTING_PAGE_INDEX = 1
 /**
  * Github API communication setup via Retrofit.
  */
